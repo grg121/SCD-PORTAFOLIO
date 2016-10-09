@@ -69,6 +69,7 @@
 \papercolumns 1
 \papersides 1
 \paperpagestyle default
+\listings_params "language={C++},keywordstyle={\color{blue}},stringstyle={\color{red}},commentstyle={\color{magenta}},morecomment={[l][\color{blue}]{\#}}"
 \tracking_changes false
 \output_changes false
 \html_math_output 0
@@ -82,8 +83,668 @@
 Sistemas Concurrentes y Distribuidos - Portafolio de prácticas
 \end_layout
 
-\begin_layout Standard
+\begin_layout Part
+Seminario 1.
+ Programación multihebra y sincronización con semáforos.
+ 
+\end_layout
 
+\begin_layout Section*
+Hebras: introducción.
+\end_layout
+
+\begin_layout Standard
+Una hebra es un flujo de control en el texto (zona con la secuencia de instrucci
+ones a ejecutar) del proceso al que pertenece (que puede ser común a varias
+ hebras).
+\end_layout
+
+\begin_layout Standard
+Los ejemplos utilizan hebras de POSIX, más concretamente, utilizan 
+\emph on
+hebras del kernel de linux
+\emph default
+, esto significa que hebras distintas de un mismo proceso pueden ejecutarse
+ en procesadores distintos (lo cual hace que sean una herramienta ideal
+ para aprovechar el potencial de los sistemas multiprocesador).
+\end_layout
+
+\begin_layout Subsection*
+Creación de hebras.
+ 
+\end_layout
+
+\begin_layout Standard
+Utilizamos la función 
+\emph on
+pthread_create: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+\end_layout
+
+\begin_layout Plain Layout
+
+void *(*start_routine)(void*), void *arg) ; 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La forma más simple de crear hebras: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#include <pthread.h> 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+void *proc1( void *arg){ 
+\end_layout
+
+\begin_layout Plain Layout
+
+	....
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+void *proc2( void *arg){
+\end_layout
+
+\begin_layout Plain Layout
+
+	...
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+int main(){
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_t hebra1, hebra2 ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_create(&hebra1, NULL, proc1, NULL) ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_create(&hebra2, NULL, proc2, NULL) ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/* Si usamos memoria dinámica sería algo como:
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_t *hebra1 ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_t *hebra2 ;
+\end_layout
+
+\begin_layout Plain Layout
+
+hebra1 = new pthread_t ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+hebra2 = new pthread_t ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_create(hebra1, NULL, proc1, NULL) ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+pthread_create(hebra2, NULL, proc2, NULL) ; */ 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+\begin_inset Newpage newpage
+\end_inset
+
+Finalización de hebras
+\end_layout
+
+\begin_layout Itemize
+Cuando una hebra encuentra un return en la función que está ejecutando.
+\end_layout
+
+\begin_layout Itemize
+Cuando termina la función que está ejecutando.
+\end_layout
+
+\begin_layout Itemize
+Si el proceso llama explícitamente a pthread_exit durante la ejecución.
+\end_layout
+
+\begin_layout Itemize
+Si otra hebra (B) llama a pthread_cancel(A), B 
+\emph on
+mata
+\emph default
+ a A.
+ 
+\end_layout
+
+\begin_layout Itemize
+Si una hebra del programa llama a exit, todas terminan.
+\end_layout
+
+\begin_layout Itemize
+Si termina la hebra principal sin haber ejecutado pthread_exit, todas terminan.
+\end_layout
+
+\begin_layout Standard
+Esto último nos indica que si la hebra principal tiene como única función
+ llamar al resto, debemos acabarla con un 
+\emph on
+pthread_exit.
+ 
+\end_layout
+
+\begin_layout Standard
+pthread_exit es una función que recibe como argumento un puntero void que
+ será el que recibirá la hebra que espera (vía join) a que finalice la hebra
+ que finaliza).
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+pthread_exit(NULL) ;
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+es la forma típica de acabar con una hebra.
+\end_layout
+
+\begin_layout Standard
+[EJEMPLOS1/ejemplo1.cpp] 
+\end_layout
+
+\begin_layout Subsection*
+Operación de unión (join) 
+\end_layout
+
+\begin_layout Standard
+mediante la función pthread_join una hebra A espera a que finalice otra
+ hebra B.
+ 
+\end_layout
+
+\begin_layout Standard
+tiene dos parámetros: el primero, la hebra objetivo (a la que se esperará)
+ y el segundo, un puntero a la variable que recibirá el dato de tipo void*
+ enviado por la hebra objetivo al finalizar.
+ Devuelve un entero que será 0 si no ha habido ningún error.
+\end_layout
+
+\begin_layout Standard
+No hay que calentarse la cabeza con los parámetros.
+ Si queremos, por ejemplo, esperar a que finalicen dos hebras antes de continuar
+ con la hebra principal podemos escribir: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+int main(){
+\end_layout
+
+\begin_layout Plain Layout
+
+	.....
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+	pthread_join(hebra1, NULL) ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+	pthread_join(hebra2, NULL) ; 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	.....
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+[EJEMPLOS1/ejemplo2.cpp]
+\end_layout
+
+\begin_layout Subsection*
+Hebras idénticas
+\end_layout
+
+\begin_layout Standard
+Es el caso en que varias hebras distintas ejecutan el mismo algoritmo 
+\emph on
+con datos de entrada distintos.
+
+\emph default
+ 
+\end_layout
+
+\begin_layout Standard
+[EJEMPLOS1/ejemplo3.cpp] Muestra un ejemplo de como pasar y recibir parámetros
+ de distintas hebras idénticas.
+ (Algo complejo y poco práctico, después veremos una forma más simple de
+ hacer lo mismo).
+ 
+\end_layout
+
+\begin_layout Subsection*
+Ejemplo de hebras: cálculo numérico de integrales
+\end_layout
+
+\begin_layout Standard
+Calculamos de forma aproximada el valor de una integral 
+\begin_inset Formula $I=\intop_{0}^{1}f(x)dx$
+\end_inset
+
+ entre los puntos 0 y 1, evaluando la función 
+\begin_inset Formula $f$
+\end_inset
+
+ en un conjunto de m puntos uniformemente espaciados en el intervalo [0,1]
+ y aproximando 
+\begin_inset Formula $I$
+\end_inset
+
+ como:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $I=\frac{1}{m}\stackrel[i=0]{m-1}{\sum}f(x_{i})$
+\end_inset
+
+ donde 
+\begin_inset Formula $x_{i}=\frac{1+1/2}{m}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+A modo de ejemplo usaremos la función f cuya integral entre 0 y 1 es el
+ número 
+\begin_inset Formula $\pi$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\pi=\underset{0}{\intop^{1}\frac{4}{1+x\text{²}}dx}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Lo haremos de forma que:
+\end_layout
+
+\begin_layout Itemize
+Cada hebra evalua f en m/n puntos (con n = número de hebras)
+\end_layout
+
+\begin_layout Itemize
+Cada hebra calcula la suma parcial de los valores de f (de forma independiente)
+\end_layout
+
+\begin_layout Itemize
+La hebra principal recoge las sumas parciales y calcula la suma total
+\end_layout
+
+\begin_layout Itemize
+En un entorno con k procesadores o núcleos el cálculo puede hacerse hasta
+ k veces más rápido.
+ Esta mejora ocurre para valores de m varios órdees de magnitus más grandes
+ que n.
+\end_layout
+
+\begin_layout Standard
+m es el número de muestras y n el número de hebras 
+\end_layout
+
+\begin_layout Standard
+(m debe ser múltiplo de n).
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+[EJEMPLOS1/calculopi]
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Tras realizar la elaboración del programa 
+\begin_inset Quotes fld
+\end_inset
+
+calculopi
+\begin_inset Quotes frd
+\end_inset
+
+, estos son los primeros resultados obtenidos:
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Ejemplo 4 (cálculo de PI) 
+\end_layout
+
+\begin_layout Plain Layout
+valor de PI (calculado secuencialmente) 
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+== 3.14159 
+\end_layout
+
+\begin_layout Plain Layout
+valor de PI (calculado concurrentemente) == 3.1415 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(con n = 4 y m = 1.000.000)
+\end_layout
+
+\begin_layout Standard
+Esto nos permite deducir que el programa funciona correctamente.
+ 
+\end_layout
+
+\begin_layout Standard
+Ahora, añadiré lo necesario para calcular el tiempo de calculo de la integral
+ secuencial y concurrentemente y compararé los resultados.
+ 
+\end_layout
+
+\begin_layout Standard
+En mi ordenador personal, que cuenta con siete procesadores, el tiempo de
+ ejecución ha sido: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Tiempo de ejecución (secuencial) == 0.00744997 
+\end_layout
+
+\begin_layout Plain Layout
+Tiempo de ejecución (concurrente) == 0.00326999 
+\end_layout
+
+\begin_layout Plain Layout
+Diferencia: 0.00417997 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Si cambiamos el valor de m por 
+\emph on
+m=1024*1024*8 
+\emph default
+y el de n por 
+\emph on
+n=8
+\emph default
+ tenemos:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Tiempo de ejecución (secuencial) == 0.0649169 
+\end_layout
+
+\begin_layout Plain Layout
+Tiempo de ejecución (concurrente) == 0.029612 
+\end_layout
+
+\begin_layout Plain Layout
+Diferencia: 0.035305
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Como podemos ver, la diferencia aumenta cuando aumentamos el número de procesado
+res a utilizar.
+ No obstante, dado que el número de procesadores es 7, si creamos más de
+ 7 hilos no deberíamos notar la diferencia.
+\end_layout
+
+\begin_layout Standard
+Con m=1024*1024*8 y n=12 obtenemos:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Tiempo de ejecución (secuencial) == 0.0579203 
+\end_layout
+
+\begin_layout Plain Layout
+Tiempo de ejecución (concurrente) == 0.0245131 
+\end_layout
+
+\begin_layout Plain Layout
+Diferencia: 0.0334071
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Como vemos, apenas hay diferencia entre utilizar 7 o 12 hebras, ya que realmente
+ solo se están ejecutando 7 de ellas al mismo tiempo.
+ 
 \end_layout
 
 \end_body
