@@ -16,3 +16,5 @@ $(OBJ)/calculopi.o: $(SRC)/calculopi.cpp $(INC)/fun_tiempo.h
 $(OBJ)/fun_tiempo.o: $(SRC)/fun_tiempo.c $(INC)/fun_tiempo.h 
 	gcc -c -I$(INC) $(SRC)/fun_tiempo.c -o $(OBJ)/fun_tiempo.o 
 
+
+

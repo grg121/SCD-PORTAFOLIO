@@ -1,0 +1,11 @@
+El programa calculopi se puede generar por medio del makefile contenido en este directorio, basta con usar la orden make. 
+
+El ejecutable resultante aparece en el directorio bin con el nombre bin/calculopi.
+
+Se puede ejecutar el programa con dos argumentos, el número de hebras a lanzar y el número de muestras a tomar para el cálculo. Si además se introduce como último argumento "-c" o "-s" se imprimirá solo el tiempo de ejecución concurrente o el tiempo de ejecución secuencial (es útil para lo que explico a continuación). 
+
+Para responder a la cuestion de cómo el número de procesadores disponibles y el número de hebras afecta al tiempo del cálculo del programa he reutilizado un script de la parte de eficiencia de la asignatura de estructura de datos para calcular distintos tiempos de ejecución para cada número de hebras y obtener una gráfica con estos. Basta con ejecutar ./ejecutar.sh con el número (en millones) de muestras a emplear que se quiera y se generará un archivo con los tiempos y dos gráficas. 
+
+En mi caso, y atendiendo a los gráficos generados para un número de muestras de 20 millones y sabiendo que dispongo de un procesador i7 con 8 procesadores, los tiempos obtenidos con una hebra (similares a los tiempos en ejecución secuencial) son muy altos en comparación con los tiempos obtenidos con dos o más hebras. A partir de dos hebras los tiempos no fluctuan demasiado por lo que he realizado otro experimento, esta vez tomando un número de muestras de 2000 millones. He guardado el resultado como "MI-RESULTADO.png". En él se puede ver con más facilidad como los tiempos disminuyen conforme aumenta el número de hebras hasta llegar a las siete u ocho hebras. A partir de entonces, los tiempos no parecen mejorar demasiado e incluso se podría decir que aumenta el número de tiempos "malos" (que de por sí son poco frecuentes). 
+
+En conclusión, el uso de concurrencias mejora drásticamente los tiempos de ejecución, solo con usar dos hebras en lugar de una ya mejora mucho el tiempo. Sin embargo, una vez que se supera el número de procesadores del ordenador, aumentar el número de hebras no ayuda especialmente a reducir el tiempo de ejecución. 

@@ -66,8 +66,7 @@ double calcular_integral_concurrente( )
   pthread_t * id_hebra = new pthread_t[n] ;
 
   for(unsigned long i = 0 ; i < n ; i++){
-    void * arg_ptr = (void *) i ; 
-    pthread_create(&(id_hebra[i]),NULL,funcion_hebra,arg_ptr) ;
+    pthread_create(&(id_hebra[i]),NULL,funcion_hebra,(void *) i) ;
   }
   
    // esperar (join) a que termine cada hebra, sumar su resultado
@@ -93,7 +92,7 @@ double calcular_integral_concurrente( )
    if(argc != 3 && argc != 4){
     cout <<  endl 
 	 << "NUMERO DE ARGUMENTOS INCORRECTO" << endl 
-         << "Uso: ./calculopi n m, donde n = número de hebras, m = número de muestras (millones) "
+         << "Uso: ./calculopi n m, donde n = número de hebras, m = número de muestras (millones), (opcional) -OPTION"
 	 << endl ;
   }
   else {
